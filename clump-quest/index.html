@@ -1,0 +1,64 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
+<title>Clump Quest</title>
+<link rel="icon" href="data:,">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../shared/portrait.css">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<div id="wrap">
+  <canvas id="c"></canvas>
+
+  <div id="topbar">
+    <label id="diffbar">
+      <span class="end">cozy</span>
+      <input id="diff" type="range" min="0" max="100" value="35" aria-label="Difficulty">
+      <span class="end">extremely hard</span>
+      <output id="diffName"></output>
+    </label>
+    <button id="btnMute" title="Sound (M)" aria-label="Toggle sound">♪</button>
+    <button id="btnPause" title="Pause (P)" aria-label="Pause">❚❚</button>
+  </div>
+
+  <div id="title" class="panel">
+    <h1>Clump Quest</h1>
+    <p class="tag">Five heroes. One clump. No brakes.</p>
+    <ul class="heroes">
+      <li><b class="k" style="--c:#e4572e">A</b><span><strong>Barbarian</strong> punches foes, smashes barriers, air-dashes mid-jump</span></li>
+      <li><b class="k" style="--c:#4caf50">S</b><span><strong>Druid</strong> whips foes away, swings from rings, flips switches</span></li>
+      <li><b class="k" style="--c:#8468ff">D</b><span><strong>Wizard</strong> fireballs far foes, zaps projectiles, lights the dark</span></li>
+      <li><b class="k" style="--c:#2ec4b6">F</b><span><strong>Cleric</strong> orb blocks melee, wakes healing altars, softens long falls</span></li>
+      <li><b class="k" style="--c:#f5c542">G</b><span><strong>Paladin</strong> press right before another hero to supercharge them</span></li>
+      <li><b class="k wide" style="--c:#fff;color:#2b1b2e">Space</b><span><strong>Jump</strong> · on touch, tap the hero buttons, or anywhere else to jump</span></li>
+    </ul>
+    <button id="btnStart" class="big">Start the adventure</button>
+    <p class="fine"><a href="../">← all games</a> · Drag the bar up top from cozy to extremely hard, any time · P pause · M sound</p>
+  </div>
+
+  <div id="pause" class="panel small hidden">
+    <h2>Paused</h2>
+    <button id="btnResume" class="big">Resume</button>
+    <button id="btnRestart" class="plain">Start over</button>
+  </div>
+
+  <div id="over" class="panel small hidden">
+    <h2>The clump has clumped its last</h2>
+    <p id="stats" class="tag"></p>
+    <button id="btnRetry" class="big">Go again</button>
+    <p class="fine">Too spicy? Slide the bar toward cozy.</p>
+  </div>
+</div>
+<div id="rotate">
+  <div class="phone">📱</div>
+  <h2>Turn your phone sideways</h2>
+  <p>Clump Quest needs landscape. It plays best on a laptop with a keyboard, but the on-screen buttons work too.</p>
+</div>
+<script type="module" src="js/main.js"></script>
+</body>
+</html>

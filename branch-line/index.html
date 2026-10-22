@@ -1,0 +1,68 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
+<title>Branch Line</title>
+<link rel="icon" href="data:,">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Pixelify+Sans:wght@400;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../shared/portrait.css">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<div id="wrap">
+  <canvas id="c" width="480" height="270"></canvas>
+  <div id="score" class="hidden">0 m</div>
+
+  <div id="topbar">
+    <label id="diffbar">
+      <span class="end">slow</span>
+      <input id="diff" type="range" min="0" max="100" value="30" aria-label="Speed">
+      <span class="end">fast</span>
+      <output id="diffName"></output>
+    </label>
+    <button id="btnMute" title="Sound (M)" aria-label="Toggle sound">♪</button>
+    <button id="btnPause" title="Pause (P)" aria-label="Pause">❚❚</button>
+  </div>
+
+  <div id="touch">
+    <div class="pad left"><button id="tUp" aria-label="Jump">▲</button><button id="tDown" aria-label="Slide">▼</button></div>
+    <div class="pad right"><button id="tRight" aria-label="Headbutt">▶</button></div>
+  </div>
+
+  <div id="title" class="panel">
+    <h1>Branch Line</h1>
+    <p class="tag">A flying squirrel, a long autumn noon, and nowhere to be.</p>
+    <table class="keys">
+      <tr><td><kbd>↑</kbd></td><td>jump</td><td><kbd>↑</kbd><kbd>↑</kbd></td><td>hop to the track above</td></tr>
+      <tr><td><kbd>↓</kbd></td><td>slide</td><td><kbd>↓</kbd><kbd>↓</kbd></td><td>drop to the track below</td></tr>
+      <tr><td><kbd>→</kbd></td><td>headbutt</td><td><kbd>↑</kbd>…<kbd>↑</kbd></td><td>jump, pause, hold to glide</td></tr>
+    </table>
+    <p class="tag small">Headbutt or slide-tackle the locals. Slide under fruit and birds. Jump the nests.</p>
+    <button id="btnStart" class="big">Start running</button>
+    <p class="fine"><a href="../">← all games</a> · speed bar up top sets the difficulty · P pause · M sound</p>
+  </div>
+
+  <div id="pause" class="panel small hidden">
+    <h2>Paused</h2>
+    <button id="btnResume" class="big">Resume</button>
+    <button id="btnRestart" class="plain">Start over</button>
+  </div>
+
+  <div id="over" class="panel small hidden">
+    <h2>Out of acorns</h2>
+    <p id="stats" class="tag"></p>
+    <button id="btnRetry" class="big">Run again</button>
+    <p class="fine">Too quick? Slide the speed bar toward slow.</p>
+  </div>
+</div>
+<div id="rotate">
+  <div class="phone">📱</div>
+  <h2>Turn your phone sideways</h2>
+  <p>Branch Line needs landscape. It's made for a keyboard's arrow keys, but the on-screen buttons work too.</p>
+</div>
+<script type="module" src="js/main.js"></script>
+</body>
+</html>

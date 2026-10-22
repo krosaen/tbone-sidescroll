@@ -1,0 +1,13 @@
+// The ten settings. `dark` and `cliff` weight how often dark zones / big drops appear there.
+export const THEMES = [
+  { id: 'dungeon', name: 'The Drippy Dungeon', boss: 'Warden Clonk', sky: ['#1b1830', '#3a2f4f'], far: '#2a2440', mid: '#3d3458', ground: '#7a6f96', dirt: '#322b45', accent: '#ffb347', far_m: 'pillars', mid_m: 'columns', mote: 'dust', dark: 2, cliff: 0.5 },
+  { id: 'castle', name: 'Castle Grounds', boss: 'Duke Pompadoodle', sky: ['#5fb0ff', '#d8f0ff'], far: '#9cc2e8', mid: '#6f9c62', ground: '#6dbb5a', dirt: '#7a5a3a', accent: '#ff6b6b', far_m: 'towers', mid_m: 'bushes', mote: 'petals', dark: 0, cliff: 0.6 },
+  { id: 'swamp', name: 'The Magical Swamp', boss: 'Big Bogsworth', sky: ['#143a3a', '#3f7a5c'], far: '#1f5148', mid: '#2c6a4c', ground: '#6fae4a', dirt: '#2e4a2c', accent: '#c6ff6b', far_m: 'trees', mid_m: 'mushrooms', mote: 'fireflies', dark: 0.6, cliff: 0.3 },
+  { id: 'sky', name: 'Temple in the Clouds', boss: 'Cumulo the Vast', sky: ['#ff9f7a', '#ffe9c9'], far: '#ffd0b0', mid: '#fff3e0', ground: '#f4ead2', dirt: '#c9b48a', accent: '#5ad1ff', far_m: 'clouds', mid_m: 'columns', mote: 'feathers', dark: 0, cliff: 3 },
+  { id: 'goblin', name: 'Goblin Caves', boss: 'Chief Snotgrub', sky: ['#2b1d14', '#5a3b22'], far: '#3d2a1b', mid: '#55391f', ground: '#a87a48', dirt: '#4a321d', accent: '#9be564', far_m: 'stalactites', mid_m: 'mushrooms', mote: 'dust', dark: 2, cliff: 0.6 },
+  { id: 'forest', name: 'The Whispering Wood', boss: 'Old Mossbottom', sky: ['#2e6b4f', '#a8e0a0'], far: '#3c8a5c', mid: '#2f6e45', ground: '#58a54a', dirt: '#5b4630', accent: '#ffd166', far_m: 'trees', mid_m: 'bushes', mote: 'petals', dark: 0.3, cliff: 0.4 },
+  { id: 'crystal', name: 'Crystal Mines', boss: 'Glimmer Gus', sky: ['#1a1040', '#40308a'], far: '#33246e', mid: '#4a3a9a', ground: '#8a7af0', dirt: '#2a1f5e', accent: '#7df9ff', far_m: 'crystals', mid_m: 'crystals', mote: 'sparkles', dark: 1.5, cliff: 0.8 },
+  { id: 'desert', name: 'Sunbaked Ruins', boss: 'Pharaoh Phil', sky: ['#ffb84d', '#ffeec2'], far: '#e8b565', mid: '#d99a4a', ground: '#f0cf8a', dirt: '#b9853f', accent: '#2ec4b6', far_m: 'dunes', mid_m: 'columns', mote: 'dust', dark: 0, cliff: 0.8 },
+  { id: 'frost', name: 'The Frozen Peaks', boss: 'Yeti Betty', sky: ['#7fa8e0', '#eaf6ff'], far: '#b7d3ee', mid: '#d5e8f7', ground: '#f4fbff', dirt: '#9cbbd6', accent: '#ff8fab', far_m: 'peaks', mid_m: 'pines', mote: 'snow', dark: 0, cliff: 1.5 },
+  { id: 'volcano', name: 'The Forge of Oops', boss: 'Magmadillo', sky: ['#2a0a0a', '#8a2c12'], far: '#4a1410', mid: '#6a2416', ground: '#6a5252', dirt: '#2a1c1c', accent: '#ff7b00', far_m: 'peaks', mid_m: 'stalactites', mote: 'embers', dark: 0.6, cliff: 1 },
+];
