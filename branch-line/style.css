@@ -12,6 +12,7 @@ canvas { display: block; width: 100%; height: 100%; image-rendering: pixelated; 
 /* Sized in em; main.js sets #wrap's font-size to 8 game-pixels' worth. */
 .box { background: rgba(28, 22, 14, .72); border: .25em solid #2a1d10; box-shadow: inset 0 0 0 .12em rgba(255,255,255,.12); }
 #score { position: absolute; top: .55em; left: 50%; transform: translateX(-50%); font-size: 1.5em; font-weight: 700; text-shadow: .1em .1em 0 #2a1d10; }
+#toast { position: absolute; top: 4.2em; left: 50%; transform: translateX(-50%); padding: .3em .9em; font-size: 1.2em; font-weight: 700; color: #ffe28a; background: rgba(28,22,14,.72); border: .2em solid #2a1d10; white-space: nowrap; }
 #topbar { position: absolute; top: .6em; right: .7em; display: flex; align-items: center; gap: .4em; }
 #diffbar { display: flex; align-items: center; gap: .45em; position: relative; padding: .25em .7em; background: rgba(28,22,14,.72); border: .2em solid #2a1d10; }
 #diffbar .end { font-size: .8em; }

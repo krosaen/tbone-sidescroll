@@ -25,6 +25,45 @@ export function ellipse(c, cx, cy, rx, ry, col) {
     c.fillRect(cx - w, cy + dy, 2 * w + 1, 1);
   }
 }
+// Scanline polygon fill with hard pixel edges. pts = [[x, y], ...]
+export function poly(c, pts, col) {
+  c.fillStyle = OVR || col;
+  let y0 = Infinity, y1 = -Infinity;
+  for (const p of pts) { y0 = Math.min(y0, p[1]); y1 = Math.max(y1, p[1]); }
+  const n = pts.length;
+  for (let y = Math.ceil(y0 - 0.5); y <= Math.floor(y1 - 0.5); y++) {
+    const yc = y + 0.5, xs = [];
+    for (let i = 0; i < n; i++) {
+      const a = pts[i], b = pts[(i + 1) % n];
+      if ((a[1] <= yc && b[1] > yc) || (b[1] <= yc && a[1] > yc)) xs.push(a[0] + ((yc - a[1]) / (b[1] - a[1])) * (b[0] - a[0]));
+    }
+    xs.sort((p, q) => p - q);
+    for (let k = 0; k + 1 < xs.length; k += 2) {
+      const xa = Math.round(xs[k]), xb = Math.round(xs[k + 1]);
+      if (xb > xa) c.fillRect(xa, y, xb - xa, 1);
+    }
+  }
+}
+// A line of given thickness (a filled quad), or a single-pixel Bresenham line when thin.
+export function thick(c, x0, y0, x1, y1, w, col) {
+  if (w <= 1.2) {
+    c.fillStyle = OVR || col;
+    let x = Math.round(x0), y = Math.round(y0);
+    const xe = Math.round(x1), ye = Math.round(y1), dx = Math.abs(xe - x), dy = -Math.abs(ye - y);
+    const sx = x < xe ? 1 : -1, sy = y < ye ? 1 : -1;
+    let err = dx + dy;
+    for (;;) {
+      c.fillRect(x, y, 1, 1);
+      if (x === xe && y === ye) break;
+      const e2 = 2 * err;
+      if (e2 >= dy) { err += dy; x += sx; }
+      if (e2 <= dx) { err += dx; y += sy; }
+    }
+    return;
+  }
+  const a = Math.atan2(y1 - y0, x1 - x0), nx = -Math.sin(a) * w / 2, ny = Math.cos(a) * w / 2;
+  poly(c, [[x0 + nx, y0 + ny], [x1 + nx, y1 + ny], [x1 - nx, y1 - ny], [x0 - nx, y0 - ny]], col);
+}
 
 // ---------- colour ----------
 const rgb = (h) => [parseInt(h.slice(1, 3), 16), parseInt(h.slice(3, 5), 16), parseInt(h.slice(5, 7), 16)];
@@ -33,18 +72,28 @@ export function mix(a, b, t) {
   const A = rgb(a), B = rgb(b);
   return hex(A[0] + (B[0] - A[0]) * t, A[1] + (B[1] - A[1]) * t, A[2] + (B[2] - A[2]) * t);
 }
+// 4x4 Bayer matrix for dithered shading.
+const BAYER = [0, 8, 2, 10, 12, 4, 14, 6, 3, 11, 1, 9, 15, 7, 13, 5].map((v) => (v + 0.5) / 16);
+const dither = (x, y, t) => t > BAYER[(y & 3) * 4 + (x & 3)];
+// Pick from a dark->light ramp at brightness b (0..1), dithering between neighbours.
+function ramp(cols, b, x, y) {
+  const f = clamp(b, 0, 0.999) * (cols.length - 1), i = Math.floor(f);
+  return cols[Math.min(cols.length - 1, i + (dither(x, y, f - i) ? 1 : 0))];
+}
 
-// Autumn foliage palettes, dark -> light.
-export const PALS = {
-  maple: ['#6e1a10', '#a12e1a', '#d24e28', '#f2803e'],
-  orange: ['#7e360e', '#bb5714', '#e58a2a', '#ffbc55'],
-  gold: ['#7c5e10', '#b98f1a', '#e3c037', '#fbe983'],
-  turning: ['#3b561c', '#5c7d25', '#93a83a', '#cdd05c'],
-  oak: ['#46181b', '#6c2427', '#963f2c', '#c46c3e'],
+// Michigan oaks in late October hang on to their leaves in russet and leather browns.
+export const OAK_LEAVES = {
+  red: ['#2e140c', '#4f2212', '#77341a', '#9e4c24', '#c06c34', '#dc9452'], // northern red oak
+  white: ['#28121a', '#451c22', '#66292a', '#8a3c32', '#a95846', '#c67c62'], // white oak: burgundy-brown
+  bur: ['#352510', '#563c18', '#7a5622', '#9e7430', '#bf9444', '#dbb468'], // bur oak: tan, leathery
 };
-const PAL_KEYS = Object.keys(PALS);
-export const LEAF_COLS = ['#d24e28', '#f2803e', '#e58a2a', '#ffbc55', '#e3c037', '#fbe983', '#a12e1a', '#963f2c', '#c46c3e', '#93a83a'];
-export const SKY_TOP = '#2c6bd0', SKY_LOW = '#a6d0f0';
+export const LEAF_COLS = ['#9e4c24', '#c06c34', '#dc9452', '#8a3c32', '#a95846', '#9e7430', '#bf9444', '#77341a', '#c67c62', '#d8a050'];
+const BARK = {
+  red: ['#24201d', '#3b3631', '#56504a', '#706a62', '#8b847a'], // dark, furrowed, flat-topped ridges
+  white: ['#3e3a36', '#5c5750', '#7d776e', '#9c968b', '#b9b2a6'], // ashy grey plates
+  bur: ['#221c17', '#382e26', '#514439', '#6a5c4e', '#857564'], // deep corky furrows
+};
+export const SKY_LOW = '#a6d0f0';
 
 function mk(w, h) {
   const cv = document.createElement('canvas');
@@ -53,18 +102,14 @@ function mk(w, h) {
   return cv;
 }
 
-// 4x4 Bayer matrix for dithered gradients.
-const BAYER = [0, 8, 2, 10, 12, 4, 14, 6, 3, 11, 1, 9, 15, 7, 13, 5].map((v) => (v + 0.5) / 16);
-
 export function makeSky() {
   const cv = mk(W, GROUND_Y), c = cv.getContext('2d');
-  const stops = ['#2a66cc', '#3374d4', '#3f82da', '#4c90df', '#5b9ee3', '#6cabe7', '#7eb8ea', '#90c3ec', '#a6d0f0'];
+  const stops = ['#2a66cc', '#3374d4', '#3f82da', '#4c90df', '#5b9ee3', '#6cabe7', '#7eb8ea', '#90c3ec', '#a6d0f0'].map(rgb);
   const img = c.createImageData(W, GROUND_Y);
-  const cols = stops.map(rgb);
   for (let y = 0; y < GROUND_Y; y++) {
     const f = (y / GROUND_Y) * (stops.length - 1), i = Math.floor(f), fr = f - i;
     for (let x = 0; x < W; x++) {
-      const col = cols[Math.min(stops.length - 1, i + (fr > BAYER[(y & 3) * 4 + (x & 3)] ? 1 : 0))];
+      const col = stops[Math.min(stops.length - 1, i + (dither(x, y, fr) ? 1 : 0))];
       const o = (y * W + x) * 4;
       img.data[o] = col[0]; img.data[o + 1] = col[1]; img.data[o + 2] = col[2]; img.data[o + 3] = 255;
     }
@@ -73,126 +118,166 @@ export function makeSky() {
   return cv;
 }
 
-// Rolling hills covered in distant autumn forest. `haze` pulls colours toward the sky.
-export function makeHills(seed, base, height, haze) {
-  const w = 960, h = height + 30, cv = mk(w, h), c = cv.getContext('2d');
-  const ridge = (x) => {
-    const u = (x / w) * Math.PI * 2;
-    return 22 + Math.sin(u * 2 + seed) * 9 + Math.sin(u * 5 + seed * 3) * 5 + Math.sin(u * 11 + seed) * 2;
-  };
-  const tint = (col) => mix(col, SKY_LOW, haze);
-  for (let x = 0; x < w; x++) {
-    const top = Math.round(ridge(x));
-    for (let y = top; y < h; y += 2) px(c, x, y, 1, 2, tint(mix(base, '#1c1408', (y - top) / h * 0.5)));
-  }
-  // treetops along the ridge and a dense speckle of leaf colours below it
-  for (let i = 0; i < w / 3; i++) {
-    const x = (i * 3 + hash(i + seed) * 3) | 0, r = 2 + ((hash(i * 7 + seed) * 3) | 0);
-    const col = LEAF_COLS[(hash(i * 13 + seed) * LEAF_COLS.length) | 0];
-    ellipse(c, x, ridge(x) + 1, r, r - 1, tint(mix(col, '#000000', 0.25)));
-    ellipse(c, x, ridge(x), r - 1, r - 2, tint(col));
-  }
-  for (let i = 0; i < w * 9; i++) {
-    const x = (rand(w)) | 0, y = ridge(x) + 2 + rand(h);
-    const col = LEAF_COLS[(Math.random() * LEAF_COLS.length) | 0];
-    px(c, x, y, 2, 2, tint(mix(col, '#1a1408', 0.15 + (y / h) * 0.45)));
-  }
-  return cv;
-}
-
-// A dense, top-lit canopy of autumn leaves.
-export function makeCanopy(w, h, palKey, haze = 0) {
-  const cv = mk(w, h), c = cv.getContext('2d');
-  const pal = PALS[palKey], alt = PALS[PAL_KEYS[(PAL_KEYS.indexOf(palKey) + 1 + ((Math.random() * 3) | 0)) % PAL_KEYS.length]];
-  const t = (col) => (haze ? mix(col, SKY_LOW, haze) : col);
-  const blobs = [];
-  const nb = 2 + Math.floor(w / 55);
-  for (let i = 0; i < nb; i++) {
-    blobs.push({ x: w * (0.14 + (0.72 * i) / Math.max(1, nb - 1)) + rand(-6, 6), y: h * rand(0.5, 0.62), r: Math.min(w * 0.3, h * 0.48) * rand(0.75, 1) });
-  }
-  blobs.push({ x: w * rand(0.35, 0.65), y: h * 0.35, r: h * 0.38 });
-  const inside = (x, y) => blobs.some((b) => (x - b.x) ** 2 + (y - b.y) ** 2 < b.r * b.r);
-  const cl = [];
-  for (let i = 0; i < (w * h) / 12; i++) {
-    const x = rand(w), y = rand(h);
-    if (inside(x, y)) cl.push({ x, y, r: 2 + ((Math.random() * 3.5) | 0), p: Math.random() < 0.16 ? alt : pal });
-  }
-  cl.sort((a, b) => a.y - b.y);
-  for (const k of cl) {
-    const sh = k.y / h; // lower = more shade
-    ellipse(c, k.x, k.y + 1, k.r, k.r * 0.8, t(mix(k.p[0], '#140a08', sh * 0.35)));
-    ellipse(c, k.x, k.y, k.r - 1, (k.r - 1) * 0.8, t(sh > 0.62 ? k.p[1] : k.p[2]));
-    if (sh < 0.75) ellipse(c, k.x - 1, k.y - 1, (k.r - 1) * 0.5, (k.r - 1) * 0.35, t(sh > 0.4 ? k.p[2] : k.p[3]));
-  }
-  // individual crisp leaves
-  for (let i = 0; i < (w * h) / 6; i++) {
-    const x = rand(w), y = rand(h);
-    if (!inside(x, y)) continue;
-    const p = Math.random() < 0.2 ? alt : pal;
-    px(c, x, y, Math.random() < 0.5 ? 2 : 1, 1, t(p[y / h < 0.45 ? 3 : y / h < 0.7 ? 2 : 1]));
-  }
-  // a few leaves poking off the silhouette
-  for (let i = 0; i < w / 2; i++) {
-    const b = blobs[(Math.random() * blobs.length) | 0], a = rand(Math.PI * 2);
-    px(c, b.x + Math.cos(a) * (b.r + 1), b.y + Math.sin(a) * (b.r + 1), 1, 1, t(pal[2]));
+// One layer of rolling grassy hills, shaded as rounded forms and pushed back with haze.
+export function makeHills() {
+  const w = 960, h = 96, cv = mk(w, h), c = cv.getContext('2d');
+  const TAU = Math.PI * 2;
+  const humps = [
+    { base: 36, amp: [10, 6, 3], f: [2, 5, 9], ph: 0.7, haze: 0.55 },
+    { base: 52, amp: [12, 5, 2], f: [3, 4, 11], ph: 2.9, haze: 0.42 },
+  ];
+  const tones = ['#4e6a2c', '#62803a', '#7a9846', '#93ae55', '#adc46a', '#c6d888'];
+  for (const hp of humps) {
+    const ridge = (x) => hp.base - hp.amp.reduce((s, a, i) => s + a * Math.sin((x / w) * TAU * hp.f[i] + hp.ph * (i + 1)), 0);
+    const cols = tones.map((t) => mix(t, SKY_LOW, hp.haze));
+    for (let x = 0; x < w; x++) {
+      const top = Math.round(ridge(x)), slope = (ridge(x + 2) - ridge(x - 2)) / 4;
+      for (let y = top; y < h; y++) {
+        // lit from above and a little from the left: rises catch light, far sides and hollows fall away
+        const depth = (y - top) / (h - top + 1);
+        const b = 0.78 - slope * 0.9 - depth * 0.55 + (hash(x * 0.13 + y * 7.1) - 0.5) * 0.08;
+        px(c, x, y, 1, 1, ramp(cols, b, x, y));
+      }
+      if (hash(x * 3.7 + hp.ph) > 0.7) px(c, x, top - 1, 1, 1, cols[3]); // grass tufts on the skyline
+    }
   }
   return cv;
 }
 
-export const randomPal = () => PAL_KEYS[(Math.random() * PAL_KEYS.length) | 0];
-
-export function makeTrunk(w, h, haze = 0) {
-  const cv = mk(w, h), c = cv.getContext('2d');
-  const dark = '#33231a', mid = '#5a3f2b', light = '#80603f';
-  const t = (col) => (haze ? mix(col, SKY_LOW, haze) : col);
-  for (let x = 0; x < w; x++) {
-    const u = Math.abs((x + 0.5) / w * 2 - 1);
-    const col = u > 0.75 ? dark : u > 0.35 ? mid : mix(mid, light, 0.6);
-    px(c, x, 0, 1, h, t(col));
-  }
-  for (let i = 0; i < (w * h) / 40; i++) {
-    const x = rand(1, w - 1) | 0, y = rand(h) | 0;
-    px(c, x, y, 1, 3 + ((Math.random() * 7) | 0), t(Math.random() < 0.7 ? dark : light));
-  }
-  return cv;
-}
-
+// Lawn: textured grass with blades standing proud of the top edge, and fallen oak leaves.
+// The tile starts 5px above GROUND_Y so the blade tips can overlap whatever stands behind.
+export const GRASS_LIP = 5;
 export function makeGround() {
-  const h = H - GROUND_Y, cv = mk(W, h), c = cv.getContext('2d');
+  const h = H - GROUND_Y + GRASS_LIP, cv = mk(W, h), c = cv.getContext('2d');
+  const tones = ['#3e5418', '#55701f', '#6c8a2c', '#82a03a', '#9cb94e', '#b7cf6a'];
   for (let x = 0; x < W; x++) {
-    const n = hash(x * 0.37);
-    px(c, x, 0, 1, h, mix('#6c8a2c', '#55701f', n * 0.6));
-    px(c, x, 0, 1, 1, mix('#93ad44', '#7f9a36', n));
-    if (hash(x * 1.7) > 0.6) px(c, x, -1 + 1, 1, 2 + ((hash(x * 3.1) * 3) | 0), '#88a43c');
+    for (let y = GRASS_LIP; y < h; y++) {
+      const b = 0.62 - (y - GRASS_LIP) / h * 0.4 + (hash(x * 1.31 + y * 17.7) - 0.5) * 0.5;
+      px(c, x, y, 1, 1, ramp(tones, b, x, y));
+    }
   }
-  for (let y = 3; y < h; y += 4) for (let x = 0; x < W; x += 3) if (hash(x * 9.1 + y) > 0.5) px(c, x, y + ((hash(x + y) * 3) | 0), 1, 1, '#4c6519');
-  // fallen leaves
-  for (let i = 0; i < 520; i++) {
-    const x = rand(W) | 0, y = 2 + ((Math.random() ** 0.7) * (h - 3)) | 0;
+  // blades: little vertical strokes, lighter at the tip, some leaning
+  for (let i = 0; i < W * 3; i++) {
+    const x = rand(W) | 0, y = GRASS_LIP + (Math.random() ** 1.6) * (h - GRASS_LIP) | 0;
+    const len = 2 + ((Math.random() * (y < GRASS_LIP + 3 ? 5 : 3)) | 0), lean = Math.random() < 0.3 ? (Math.random() < 0.5 ? -1 : 1) : 0;
+    for (let k = 0; k < len; k++) px(c, x + (k > len / 2 ? lean : 0), y - k, 1, 1, tones[Math.min(5, 1 + Math.round((k / len) * 4))]);
+  }
+  // fallen oak leaves with a dark underside pixel
+  for (let i = 0; i < 260; i++) {
+    const x = rand(W) | 0, y = GRASS_LIP + 2 + ((Math.random() ** 0.8) * (h - GRASS_LIP - 3)) | 0;
     const col = LEAF_COLS[(Math.random() * LEAF_COLS.length) | 0];
-    px(c, x, y, 2, 1, mix(col, '#3a2a10', y / h * 0.35));
-    if (Math.random() < 0.4) px(c, x + 1, y - 1, 1, 1, col);
+    px(c, x, y, 3, 1, col);
+    px(c, x + 1, y - 1, 1, 1, mix(col, '#ffffff', 0.15));
+    px(c, x, y + 1, 2, 1, mix(col, '#1a1008', 0.45));
   }
   return cv;
 }
 
-// Small leaf tufts that sprout along branches.
-export function makeTuft(palKey) {
-  const cv = mk(11, 8), c = cv.getContext('2d'), p = PALS[palKey];
-  px(c, 2, 5, 6, 1, '#5a3d27'); // twig
-  for (let i = 0; i < 7; i++) {
-    const x = rand(1, 10) | 0, y = rand(1, 6) | 0;
-    px(c, x, y, Math.random() < 0.5 ? 2 : 1, 1, p[1 + ((Math.random() * 3) | 0)]);
+// A small clump of leaves that never let go: lit from above so it reads as a solid little form.
+export function makeLeafCluster(species, size = 1) {
+  const pal = OAK_LEAVES[species];
+  const w = Math.round(10 + size * 6), h = Math.round(7 + size * 4), cv = mk(w, h), c = cv.getContext('2d');
+  const leaves = [];
+  for (let i = 0; i < 8 + size * 9; i++) {
+    const y = rand(2, h - 2);
+    leaves.push({ x: rand(2.5, w - 2.5) * (0.7 + 0.3 * (1 - y / h)) + w * 0.15 * (y / h), y, rx: rand(1, 2.2), ry: rand(0.6, 1.4) });
   }
-  px(c, 6, 2, 1, 1, p[3]);
+  leaves.sort((a, b) => b.y - a.y); // lowest first; upper leaves overlap them
+  for (const l of leaves) {
+    const up = 1 - l.y / h; // how much sky this leaf faces
+    ellipse(c, l.x, l.y + 1, l.rx, l.ry, pal[0]);
+    ellipse(c, l.x, l.y, l.rx, l.ry, pal[1 + Math.round(up * 3)]);
+    if (up > 0.35) px(c, l.x - 1, l.y - Math.round(l.ry), 2, 1, pal[Math.min(5, 3 + Math.round(up * 2))]);
+    px(c, l.x + Math.round(l.rx), l.y, 1, 1, pal[0]); // a lobe notch
+  }
+  px(c, w / 2 - 1, 0, 1, 2, '#3b3631'); // twig it hangs from
   return cv;
 }
 
-// Draw a sprite in horizontal slices that sway more toward the top (wind in the canopy).
-export function drawSway(c, img, x, y, t, amp, seed, step = 3) {
+// A bare Michigan oak: stout furrowed trunk, elbowed limbs that zig-zag upward, fine twigs,
+// and the odd clump of leaves still hanging on. Drawn with its root flare at the canvas bottom.
+export function makeOak({ height, species = 'red', scale = 1, haze = 0, leaves = 0, crownY = 80 }) {
+  const w = Math.round(320 * scale), h = Math.round(height), cv = mk(w, h + 2), c = cv.getContext('2d');
+  const bark = BARK[species].map((b) => (haze ? mix(b, SKY_LOW, haze) : b));
+  const cx = w / 2, tw = Math.max(5, Math.round(26 * scale));
+  const crownBase = h - (GROUND_Y - crownY) * scale; // where the trunk splits into limbs
+  const limbs = [];
+
+  const seg = (x0, y0, x1, y1, th) => {
+    thick(c, x0, y0, x1, y1, th, bark[1]);
+    if (th >= 2.5) {
+      thick(c, x0, y0 - th * 0.22, x1, y1 - th * 0.22, th * 0.5, bark[2]); // top-lit upper side
+      thick(c, x0, y0 - th * 0.38, x1, y1 - th * 0.38, 1, bark[3]);
+      thick(c, x0, y0 + th * 0.4, x1, y1 + th * 0.4, 1, bark[0]); // shadowed underside
+    } else if (th >= 1.6) thick(c, x0, y0 - 0.5, x1, y1 - 0.5, 1, bark[2]);
+  };
+  // Oak limbs are "elbowed": each run changes direction abruptly a few times.
+  const grow = (x, y, ang, len, th, depth) => {
+    const parts = 2 + ((Math.random() * 2) | 0);
+    for (let i = 0; i < parts; i++) {
+      ang += rand(-0.6, 0.6);
+      ang = clamp(ang, -Math.PI + 0.3, -0.3); // keep reaching upward
+      const l = len / parts, nx = x + Math.cos(ang) * l, ny = y + Math.sin(ang) * l;
+      seg(x, y, nx, ny, th);
+      x = nx; y = ny;
+      th *= 0.86;
+      if (depth > 0 && Math.random() < 0.5) grow(x, y, ang + rand(-1, 1), len * 0.45, th * 0.6, depth - 1);
+    }
+    if (depth <= 0 || th < 1) {
+      for (let k = 0; k < 5; k++) { // twig spray
+        const a = ang + rand(-1.1, 1.1), l = rand(3, 10) * scale;
+        thick(c, x, y, x + Math.cos(a) * l, y + Math.sin(a) * l, 1, bark[2]);
+      }
+      if (Math.random() < leaves) limbs.push([x, y]);
+      return;
+    }
+    const kids = 2 + ((Math.random() * 2) | 0);
+    for (let k = 0; k < kids; k++) grow(x, y, ang + rand(-0.75, 0.75), len * rand(0.55, 0.75), th * 0.62, depth - 1);
+  };
+
+  // crown first, so the trunk sits on top where the limbs leave it
+  const nLimbs = 3 + ((Math.random() * 2) | 0);
+  for (let i = 0; i < nLimbs; i++) {
+    const a = -Math.PI / 2 + (i / (nLimbs - 1) - 0.5) * rand(1.8, 2.4);
+    grow(cx + rand(-tw * 0.3, tw * 0.3), crownBase + rand(0, 10 * scale), a, rand(80, 115) * scale, tw * 0.5, 4);
+  }
+  // a couple of upward limbs leaving the trunk lower down (never horizontal, so they don't read as tracks)
+  for (let i = 0; i < 2; i++) {
+    const side = i ? 1 : -1;
+    grow(cx + side * tw * 0.3, crownBase + rand(20, 50) * scale, -Math.PI / 2 + side * rand(0.5, 0.8), rand(40, 60) * scale, tw * 0.3, 2);
+  }
+
+  // trunk: tapering, with a root flare, shaded as a cylinder, bark textured per species
+  for (let y = Math.floor(crownBase - 6); y <= h + 1; y++) {
+    const u = (y - crownBase) / (h - crownBase);
+    const half = (tw * (0.55 + 0.45 * clamp(u, 0, 1)) + (u > 0.9 ? (u - 0.9) * 10 * tw * 0.6 : 0)) / 2;
+    for (let x = Math.round(cx - half); x <= Math.round(cx + half); x++) {
+      const r = (x - cx) / Math.max(1, half); // -1..1 across the trunk
+      let b = 0.75 - r * r * 0.55 - r * 0.08; // round, a touch brighter on the left
+      const ridgeX = Math.floor((x - cx + 40) / (species === 'white' ? 4 : 3));
+      if (species === 'white') { // blocky, flaking plates
+        if (hash(ridgeX * 3.1 + Math.floor(y / 6) * 1.7) > 0.72 && (y % 6 === 0 || (x & 3) === 0)) b -= 0.4;
+      } else if (((x - cx + 40) % 3 === 0) || hash(ridgeX * 5.3 + Math.floor(y / 9)) > 0.8) b -= 0.38; // vertical furrows
+      if (hash(x * 9.7 + y * 3.3) > 0.93) b += 0.18;
+      px(c, x, y, 1, 1, ramp(bark, b, x, y));
+    }
+  }
+  // the odd clump of marcescent leaves high in the crown
+  for (const [x, y] of limbs) {
+    const cl = makeLeafCluster(species, scale < 0.7 ? 0 : 0.6);
+    c.globalAlpha = haze ? 1 - haze * 0.6 : 1;
+    c.drawImage(cl, Math.round(x - cl.width / 2), Math.round(y - 1));
+    c.globalAlpha = 1;
+  }
+  return cv;
+}
+
+// Draw a sprite whose upper rows sway a little in the wind (the trunk base stays put).
+export function drawSway(c, img, x, y, t, amp, seed, step = 3, until = img.height) {
   const h = img.height, w = img.width;
   for (let sy = 0; sy < h; sy += step) {
-    const off = Math.round(Math.sin(t * 1.1 + seed + sy * 0.06) * amp * (1 - sy / h) + Math.sin(t * 2.3 + seed * 2) * 0.4);
+    const k = Math.max(0, 1 - sy / until);
+    const off = sy < until ? Math.round(Math.sin(t * 1.1 + seed + sy * 0.05) * amp * k + Math.sin(t * 2.3 + seed * 2) * 0.4 * k) : 0;
     c.drawImage(img, 0, sy, w, Math.min(step, h - sy), Math.round(x) + off, Math.round(y) + sy, w, Math.min(step, h - sy));
   }
 }

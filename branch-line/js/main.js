@@ -1,5 +1,5 @@
 // Bootstrap: canvas scaling, keyboard + touch input, menus and the frame loop.
-import { G, reset, update, score, upPress, upRelease, downPress, rightPress } from './game.js';
+import { G, reset, update, score, upPress, upRelease, downPress, downRelease, rightPress } from './game.js';
 import { render } from './render.js';
 import { W, H } from './art.js';
 import { initAudio, setMuted, isMuted } from './sfx.js';
@@ -57,6 +57,14 @@ G.onOver = () => {
   $('stats').innerHTML = `You made it <b>${score().toLocaleString()} m</b><br>Best <b>${G.best.toLocaleString()} m</b>`;
   setTimeout(() => show('over'), 800);
 };
+let toastTimer = 0;
+G.onToast = (msg) => {
+  const el = $('toast');
+  el.textContent = msg;
+  el.classList.remove('hidden');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => el.classList.add('hidden'), 2200);
+};
 $('btnStart').onclick = start;
 $('btnRetry').onclick = start;
 $('btnRestart').onclick = start;
@@ -81,10 +89,13 @@ window.addEventListener('keydown', (e) => {
   else if (DOWN.includes(e.code)) downPress();
   else if (RIGHT.includes(e.code)) rightPress();
 });
-window.addEventListener('keyup', (e) => { if (UP.includes(e.code)) upRelease(); });
+window.addEventListener('keyup', (e) => {
+  if (UP.includes(e.code)) upRelease();
+  if (DOWN.includes(e.code)) downRelease();
+});
 
 // touch buttons: press/hold just like the arrow keys
-for (const [id, down, up] of [['tUp', upPress, upRelease], ['tDown', downPress], ['tRight', rightPress]]) {
+for (const [id, down, up] of [['tUp', upPress, upRelease], ['tDown', downPress, downRelease], ['tRight', rightPress]]) {
   const el = $(id);
   el.addEventListener('pointerdown', (e) => { e.preventDefault(); initAudio(); if (G.mode === 'play') down(); });
   if (up) for (const ev of ['pointerup', 'pointercancel', 'pointerleave']) el.addEventListener(ev, () => up());
@@ -115,6 +126,6 @@ requestAnimationFrame(frame);
 
 // For poking at things in the console. sim(n) fast-forwards n seconds with the bot playing.
 window.__branch = {
-  G, start, update, upPress, upRelease, downPress, rightPress,
+  G, start, update, upPress, upRelease, downPress, downRelease, rightPress,
   sim(secs) { for (let i = 0; i < secs * 60 && G.mode === 'play'; i++) { bot(); update(1 / 60); } },
 };
