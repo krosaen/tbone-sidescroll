@@ -126,6 +126,7 @@ const EYES = {
   fear: { d: [[-1.15, 0], [[-1.15, -0.85], [-0.6, -1.25], [0.05, -1.22]], [[0.75, -1.2], [1.18, -0.6], [1.15, 0.05]], [[1.12, 0.8], [0.55, 1.2], [0, 1.18]], [[-0.62, 1.18], [-1.15, 0.7], [-1.15, 0]]], pupil: [0.12, 0.02], pr: 0.56 }, // wide open: white all round
   squint: { d: [[-1.08, 0.08], [[-0.45, -0.36], [0.5, -0.44], [1.08, -0.04]], [[0.5, 0.28], [-0.45, 0.32], [-1.08, 0.08]]], pupil: [0.3, -0.02], pr: 0.62 }, // narrowed lens, watching
   baffled: { d: [[-0.95, 0.35], [[-1.1, -0.95], [0.45, -1.45], [0.98, -0.32]], [[1.12, 0.55], [-0.55, 0.95], [-0.95, 0.35]]], pupil: [-0.32, -0.3], pr: 0.6 }, // lopsided, looking back
+  run: { d: [[-1.05, 0.02], [[-1.0, -0.78], [-0.45, -1.1], [0.1, -1.08]], [[0.7, -1.05], [1.06, -0.55], [1.05, 0.06]], [[1.02, 0.68], [0.5, 1.0], [0, 0.98]], [[-0.55, 0.98], [-1.04, 0.6], [-1.05, 0.02]]], pupil: [0.26, -0.04], pr: 0.74 }, // bright, focused ahead
   fearless: { d: [[-1, -0.3], [[-0.45, -0.62], [0.42, -0.34], [1.02, 0.12]], [[0.62, 0.78], [-0.72, 0.78], [-1, -0.3]]], pupil: [0.34, 0.12], pr: 0.64 }, // lid slanting down to the nose
 };
 const EXPR = {
@@ -134,9 +135,11 @@ const EXPR = {
   sneak: { eye: 'squint', ear: -70, far: -55, tilt: 0 },
   baffled: { eye: 'baffled', ear: -118, far: -58, tilt: 16 },
   fearless: { eye: 'fearless', ear: -158, far: -146, tilt: 0 },
+  run: { eye: 'run', ear: -128, far: -112, tilt: 0 },
 };
 
 let uid = 0;
+const ID = 'e' + Math.random().toString(36).slice(2, 7) + '-'; // unique per copy of the rig, so v1 and v2 clip-paths never collide
 function headParts(c, r, ang, dir, expr, V) {
   const X = (p) => add(c, mul(rot([p[0] * dir, p[1]], ang * dir), r)); // head-local -> world
   const snout = (p) => (p[0] > 0.4 ? [0.4 + (p[0] - 0.4) * V.snout, p[1]] : p);
@@ -153,7 +156,7 @@ function headParts(c, r, ang, dir, expr, V) {
   let d = `M${f(EX(ed.d[0]))}`;
   for (const seg of ed.d.slice(1)) d += `C${f(EX(seg[0]))} ${f(EX(seg[1]))} ${f(EX(seg[2]))}`;
   d += 'Z';
-  const id = `e${uid++}`, pc = EX(ed.pupil), hl = EX([ed.pupil[0] + 0.24, ed.pupil[1] - 0.26]);
+  const id = `${ID}${uid++}`, pc = EX(ed.pupil), hl = EX([ed.pupil[0] + 0.24, ed.pupil[1] - 0.26]);
   const eye = `<clipPath id="${id}"><path d="${d}"/></clipPath><path d="${d}" fill="${COL.white}"/>`
     + `<circle cx="${(pc[0] * U).toFixed(1)}" cy="${(pc[1] * U).toFixed(1)}" r="${(ed.pr * R * r * U).toFixed(1)}" fill="${COL.pupil}" clip-path="url(#${id})"/>`
     + `<circle cx="${(hl[0] * U).toFixed(1)}" cy="${(hl[1] * U).toFixed(1)}" r="${(0.13 * R * r * U).toFixed(1)}" fill="${COL.white}" clip-path="url(#${id})"/>`;
@@ -326,17 +329,71 @@ export function squirrel(P, V) {
 }
 
 // One framed drawing. Same scale in every cell so the versions compare honestly.
-export function figureSVG(P, V, { w = 5.0, h = 3.3 } = {}) {
+export function figureSVG(P, V, { w = 5.0, h = 3.3, center = null, ground = null, scroll = null } = {}) {
   const F = squirrel(P, V);
-  const [x0, y0, x1, y1] = F.box, cx = (x0 + x1) / 2, cy = (y0 + y1) / 2;
-  const s = Math.min(1, (w - 0.3) / (x1 - x0), (h - 0.3) / (y1 - y0));
+  const [x0, y0, x1, y1] = F.box;
+  const cx = center ? center[0] : (x0 + x1) / 2, cy = center ? center[1] : (y0 + y1) / 2;
+  const s = center ? 1 : Math.min(1, (w - 0.3) / (x1 - x0), (h - 0.3) / (y1 - y0));
   const vb = [(cx - w / 2 / s) * U, (cy - h / 2 / s) * U, (w / s) * U, (h / s) * U].map((v) => v.toFixed(1)).join(' ');
-  let ground = '';
-  if (F.groundY != null) {
+  let base = '';
+  if (scroll != null) { // a flat track with dashes sliding past, for the running loops
+    const gy = ground ?? F.groundY ?? 0.45, a = cx - w / 2, b = cx + w / 2;
+    base = `<path d="M${f([a, gy + 0.03])}C${f([a + (b - a) * 0.33, gy + 0.03])} ${f([a + (b - a) * 0.66, gy + 0.03])} ${f([b, gy + 0.03])}" fill="none" stroke="#c9c2b4" stroke-width="4" stroke-linecap="round" stroke-dasharray="34 26" stroke-dashoffset="${(scroll * U).toFixed(1)}"/>`;
+  } else if (F.groundY != null) {
     const gy = F.groundY, a = cx - w / 2 / s, b = cx + w / 2 / s;
-    ground = `<path d="M${f([a, gy + 0.05])}C${f([a + (b - a) * 0.3, gy - 0.02])} ${f([a + (b - a) * 0.7, gy + 0.03])} ${f([b, gy + 0.01])}" fill="none" stroke="#c9c2b4" stroke-width="3" stroke-linecap="round"/>`;
+    base = `<path d="M${f([a, gy + 0.05])}C${f([a + (b - a) * 0.3, gy - 0.02])} ${f([a + (b - a) * 0.7, gy + 0.03])} ${f([b, gy + 0.01])}" fill="none" stroke="#c9c2b4" stroke-width="3" stroke-linecap="round"/>`;
   } else if (F.shadow) {
-    ground = `<ellipse cx="${(cx * U).toFixed(1)}" cy="${(F.shadow * U).toFixed(1)}" rx="${(0.8 * U).toFixed(1)}" ry="${(0.07 * U).toFixed(1)}" fill="#000" opacity=".08"/>`;
+    base = `<ellipse cx="${(cx * U).toFixed(1)}" cy="${(F.shadow * U).toFixed(1)}" rx="${(0.8 * U).toFixed(1)}" ry="${(0.07 * U).toFixed(1)}" fill="#000" opacity=".08"/>`;
   }
-  return `<svg viewBox="${vb}" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="${V.name}: ${P.title}, ${P.mood}">${ground}${F.svg}</svg>`;
+  return `<svg viewBox="${vb}" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="${V.name}: ${P.title}, ${P.mood}">${base}${F.svg}</svg>`;
 }
+
+// ---------- run cycle ----------
+// Eight key poses of one gallop stride, studied frame by frame from slow-motion footage of a gray
+// squirrel running flat out. The head stays level the whole way; the tail is carried low and long.
+const K = (title, spine, head, hindN, hindF, foreN, foreF, tail) => ({ title, spine, head: { c: head[0], ang: head[1], dir: 1 }, hindN, hindF, foreN, foreF, tail });
+export const RUN = [
+  K('push-off', [[-0.36, 0.0], [0, -0.08], [0.5, -0.14], [0.95, -0.12], [1.2, -0.18]], [[1.42, -0.28], 0],
+    [[0, -0.04], [-0.02, 0.2], [-0.2, 0.34], [-0.36, 0.45]], [[-0.03, -0.06], [0.05, 0.18], [-0.12, 0.32], [-0.26, 0.44]],
+    [[0.95, -0.06], [0.9, 0.12], [1.02, 0.26], [1.12, 0.3]], [[0.92, -0.08], [0.86, 0.1], [0.96, 0.24], [1.06, 0.27]],
+    [[-0.4, -0.02], [-0.8, 0.04], [-1.2, 0.08], [-1.55, 0.06], [-1.8, 0.0]]),
+  K('extension', [[-0.42, 0.02], [0, -0.06], [0.55, -0.1], [1.08, -0.06], [1.34, -0.1]], [[1.58, -0.18], 4],
+    [[0, -0.02], [-0.2, 0.16], [-0.52, 0.3], [-0.74, 0.43]], [[-0.03, -0.04], [-0.22, 0.12], [-0.54, 0.24], [-0.78, 0.34]],
+    [[1.08, 0.0], [1.12, 0.16], [1.36, 0.3], [1.5, 0.36]], [[1.04, -0.02], [1.06, 0.14], [1.28, 0.28], [1.42, 0.32]],
+    [[-0.46, 0.0], [-0.9, 0.06], [-1.32, 0.1], [-1.7, 0.1], [-1.98, 0.05]]),
+  K('full stretch', [[-0.44, -0.06], [0, -0.1], [0.56, -0.08], [1.1, -0.02], [1.36, -0.06]], [[1.6, -0.12], 6],
+    [[0, -0.06], [-0.22, 0.08], [-0.5, 0.2], [-0.72, 0.3]], [[-0.03, -0.08], [-0.24, 0.04], [-0.52, 0.14], [-0.76, 0.22]],
+    [[1.1, 0.04], [1.18, 0.2], [1.42, 0.36], [1.58, 0.44]], [[1.06, 0.02], [1.12, 0.18], [1.34, 0.34], [1.5, 0.42]],
+    [[-0.48, -0.06], [-0.9, 0.02], [-1.3, 0.1], [-1.66, 0.16], [-1.92, 0.18]]),
+  K('front landing', [[-0.38, -0.22], [0, -0.24], [0.5, -0.18], [0.96, -0.04], [1.2, 0.02]], [[1.44, -0.02], 10],
+    [[0, -0.2], [0.12, -0.02], [-0.08, 0.12], [0.08, 0.24]], [[-0.03, -0.22], [0.06, -0.04], [-0.14, 0.08], [0.0, 0.2]],
+    [[0.96, 0.02], [0.98, 0.18], [1.12, 0.36], [1.24, 0.45]], [[0.92, 0.0], [0.9, 0.18], [1.0, 0.36], [1.1, 0.45]],
+    [[-0.42, -0.22], [-0.82, -0.12], [-1.2, 0.0], [-1.56, 0.1], [-1.84, 0.16]]),
+  K('gather', [[-0.3, -0.12], [0, -0.28], [0.38, -0.36], [0.74, -0.18], [0.96, -0.06]], [[1.18, -0.04], 12],
+    [[0.02, -0.22], [0.3, -0.06], [0.14, 0.14], [0.36, 0.24]], [[-0.02, -0.24], [0.24, -0.08], [0.06, 0.1], [0.26, 0.2]],
+    [[0.74, -0.1], [0.7, 0.1], [0.8, 0.3], [0.86, 0.45]], [[0.7, -0.12], [0.64, 0.1], [0.7, 0.3], [0.74, 0.45]],
+    [[-0.34, -0.12], [-0.74, -0.04], [-1.12, 0.06], [-1.5, 0.12], [-1.8, 0.12]]),
+  K('hind feet passing', [[-0.26, -0.02], [0, -0.2], [0.36, -0.32], [0.72, -0.24], [0.96, -0.18]], [[1.18, -0.2], 6],
+    [[0.02, -0.14], [0.36, 0.0], [0.26, 0.22], [0.6, 0.4]], [[-0.02, -0.16], [0.3, -0.02], [0.18, 0.2], [0.5, 0.36]],
+    [[0.72, -0.16], [0.66, 0.04], [0.76, 0.24], [0.82, 0.36]], [[0.68, -0.18], [0.6, 0.04], [0.66, 0.26], [0.7, 0.42]],
+    [[-0.3, -0.02], [-0.7, 0.02], [-1.1, 0.06], [-1.5, 0.08], [-1.8, 0.04]]),
+  K('hind landing', [[-0.24, 0.06], [0, -0.12], [0.34, -0.26], [0.68, -0.24], [0.92, -0.24]], [[1.14, -0.3], 0],
+    [[0.02, -0.06], [0.32, 0.1], [0.24, 0.3], [0.6, 0.45]], [[-0.02, -0.08], [0.26, 0.08], [0.16, 0.28], [0.5, 0.44]],
+    [[0.68, -0.16], [0.64, 0.02], [0.78, 0.14], [0.9, 0.16]], [[0.64, -0.18], [0.6, 0.0], [0.72, 0.12], [0.84, 0.14]],
+    [[-0.28, 0.06], [-0.68, 0.08], [-1.08, 0.1], [-1.46, 0.1], [-1.76, 0.04]]),
+  K('push', [[-0.3, 0.04], [0, -0.1], [0.44, -0.2], [0.84, -0.18], [1.08, -0.22]], [[1.3, -0.3], 0],
+    [[0, -0.04], [0.18, 0.14], [0.0, 0.32], [0.2, 0.45]], [[-0.03, -0.06], [0.14, 0.12], [-0.06, 0.3], [0.12, 0.44]],
+    [[0.84, -0.1], [0.8, 0.08], [0.94, 0.22], [1.06, 0.26]], [[0.8, -0.12], [0.76, 0.06], [0.88, 0.2], [1.0, 0.24]],
+    [[-0.34, 0.02], [-0.74, 0.06], [-1.14, 0.08], [-1.52, 0.08], [-1.82, 0.02]]),
+];
+// Smoothly interpolated pose at phase u (0..1 around the stride), Catmull-Rom between keys.
+export function runPose(u, expr = 'run') {
+  const n = RUN.length, f = (((u % 1) + 1) % 1) * n, i = Math.floor(f), t = f - i;
+  const A = RUN[(i + n - 1) % n], B = RUN[i], C = RUN[(i + 1) % n], D = RUN[(i + 2) % n];
+  const m = (a, b, c, d) => (Array.isArray(a) ? a.map((_, j) => m(a[j], b[j], c[j], d[j])) : cr([0, a], [0, b], [0, c], [0, d], t)[1]);
+  const keys = ['spine', 'hindN', 'hindF', 'foreN', 'foreF', 'tail'], P = { key: 'run', title: 'Run cycle', mood: 'running', expr, ground: 0.45 };
+  for (const k of keys) P[k] = m(A[k], B[k], C[k], D[k]);
+  P.head = { c: m(A.head.c, B.head.c, C.head.c, D.head.c), ang: m(A.head.ang, B.head.ang, C.head.ang, D.head.ang), dir: 1 };
+  return P;
+}
+export const runKey = (i, expr = 'run') => ({ ...RUN[i], key: 'run' + i, mood: 'running', expr, ground: 0.45, head: { ...RUN[i].head } });

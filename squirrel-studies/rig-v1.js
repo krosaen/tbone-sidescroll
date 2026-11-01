@@ -137,6 +137,7 @@ const EXPR = {
 };
 
 let uid = 0;
+const ID = 'e' + Math.random().toString(36).slice(2, 7) + '-'; // unique per copy of the rig, so v1 and v2 clip-paths never collide
 function headParts(c, r, ang, dir, expr, V) {
   const X = (p) => add(c, mul(rot([p[0] * dir, p[1]], ang * dir), r)); // head-local -> world
   const snout = (p) => (p[0] > 0.4 ? [0.4 + (p[0] - 0.4) * V.snout, p[1]] : p);
@@ -153,7 +154,7 @@ function headParts(c, r, ang, dir, expr, V) {
   let d = `M${f(EX(ed.d[0]))}`;
   for (const seg of ed.d.slice(1)) d += `C${f(EX(seg[0]))} ${f(EX(seg[1]))} ${f(EX(seg[2]))}`;
   d += 'Z';
-  const id = `e${uid++}`, pc = EX(ed.pupil), hl = EX([ed.pupil[0] + 0.24, ed.pupil[1] - 0.26]);
+  const id = `${ID}${uid++}`, pc = EX(ed.pupil), hl = EX([ed.pupil[0] + 0.24, ed.pupil[1] - 0.26]);
   const eye = `<clipPath id="${id}"><path d="${d}"/></clipPath><path d="${d}" fill="${COL.white}"/>`
     + `<circle cx="${(pc[0] * U).toFixed(1)}" cy="${(pc[1] * U).toFixed(1)}" r="${(ed.pr * R * r * U).toFixed(1)}" fill="${COL.pupil}" clip-path="url(#${id})"/>`
     + `<circle cx="${(hl[0] * U).toFixed(1)}" cy="${(hl[1] * U).toFixed(1)}" r="${(0.13 * R * r * U).toFixed(1)}" fill="${COL.white}" clip-path="url(#${id})"/>`;

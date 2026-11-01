@@ -46,6 +46,14 @@
   dialog .row + .row { border-top: 1px dashed var(--line); }
   dialog .row .tag { position: absolute; top: 10px; left: 14px; color: var(--dim); font-size: .85rem; }
   dialog p { margin: 0; padding: 10px 18px 16px; color: var(--dim); }
+  .runhead { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; margin: 2.4em 0 .4em; }
+  .runhead h2 { margin: 0; }
+  .runs { display: grid; grid-template-columns: 220px minmax(260px, 1.6fr) repeat(8, minmax(80px, 1fr)); gap: 8px; min-width: 1250px; align-items: center; }
+  .runs .loop, .runs .key { background: var(--paper); border: 1px solid var(--line); border-radius: 12px; }
+  .runs .loop { aspect-ratio: 5 / 2.4; }
+  .runs .key { aspect-ratio: 5 / 3.3; }
+  .runs svg { width: 100%; height: 100%; display: block; }
+  .runs .klabel { font-size: .74rem; color: var(--dim); text-align: center; }
   @media (max-width: 700px) { .grid { grid-template-columns: 130px repeat(5, 170px); min-width: 0; } .rowhead span { display: none; } }
 </style>
 </head>
@@ -60,6 +68,17 @@
   </div>
   <p class="about" id="about"></p>
   <div class="scroll"><div class="grid" id="grid"></div></div>
+
+  <div class="runhead">
+    <h2>Run cycle · v2</h2>
+    <div class="tabs" role="tablist" id="speed" style="margin:0">
+      <button role="tab" data-s="0.45" aria-selected="true">Slow motion</button>
+      <button role="tab" data-s="1.6" aria-selected="false">Game speed</button>
+      <button role="tab" data-s="5" aria-selected="false">Real speed</button>
+    </div>
+  </div>
+  <p class="about">One full gallop stride in eight key poses, studied frame by frame from slow-motion footage of a gray squirrel running flat out (used privately as reference; not reproduced here). The loops interpolate smoothly between the keys. Notice how level the head stays, how the rump rises above the shoulders as the forepaws land, and how far the hind feet swing past them before landing. A real squirrel does about five of these strides a second.</p>
+  <div class="scroll"><div class="runs" id="runs"></div></div>
 
   <h2>What v2 took from the photographs</h2>
   <ul class="refs" id="refs"></ul>
@@ -113,6 +132,38 @@
     });
   }
   draw();
+
+  // ---- run cycle ----
+  const runs = document.getElementById('runs');
+  const keyNames = V2.RUN.map((k) => k.title);
+  runs.insertAdjacentHTML('beforeend', '<div></div><div class="klabel">looping</div>' + keyNames.map((k, i) => `<div class="klabel">${i + 1}. ${k}</div>`).join(''));
+  const frame = {}; // per version: fixed framing so the loop doesn't jitter
+  for (const V of V2.VERSIONS) {
+    const boxes = V2.RUN.map((_, i) => V2.squirrel(V2.runKey(i), V));
+    const xs = boxes.flatMap((b) => [b.box[0], b.box[2]]), ys = boxes.flatMap((b) => [b.box[1], b.box[3]]);
+    const ground = Math.max(...boxes.map((b) => b.groundY));
+    frame[V.key] = { center: [(Math.min(...xs) + Math.max(...xs)) / 2, (Math.min(...ys) + ground) / 2], ground, w: Math.max(...xs) - Math.min(...xs) + 0.5 };
+    runs.insertAdjacentHTML('beforeend', `<div class="rowhead"><b>${V.name}</b></div><div class="loop" id="loop-${V.key}"></div>`
+      + V2.RUN.map((_, i) => `<div class="key">${V2.figureSVG(V2.runKey(i), V)}</div>`).join(''));
+  }
+  let rate = 0.45, phase = 0, last = performance.now(), dist = 0;
+  for (const b of document.querySelectorAll('#speed button')) {
+    b.addEventListener('click', () => { rate = +b.dataset.s; for (const o of document.querySelectorAll('#speed button')) o.setAttribute('aria-selected', o === b); });
+  }
+  function tick(now) {
+    const dt = Math.min(0.05, (now - last) / 1000);
+    last = now;
+    phase += dt * rate;
+    dist += dt * rate * 1.9; // a stride covers roughly two body lengths
+    const P = V2.runPose(phase);
+    for (const V of V2.VERSIONS) {
+      const F = frame[V.key];
+      document.getElementById('loop-' + V.key).innerHTML = V2.figureSVG(P, V, { center: F.center, ground: F.ground, w: F.w, h: F.w * 2.4 / 5, scroll: dist });
+    }
+    requestAnimationFrame(tick);
+  }
+  if (!matchMedia('(prefers-reduced-motion: reduce)').matches) requestAnimationFrame(tick);
+  else for (const V of V2.VERSIONS) { const F = frame[V.key]; document.getElementById('loop-' + V.key).innerHTML = V2.figureSVG(V2.runPose(0.2), V, { center: F.center, ground: F.ground, w: F.w, h: F.w * 2.4 / 5, scroll: 0 }); }
 
   const dlg = document.getElementById('zoom');
   grid.addEventListener('click', (e) => {
