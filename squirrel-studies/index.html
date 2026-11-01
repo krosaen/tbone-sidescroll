@@ -14,8 +14,13 @@
   body { margin: 0; background: var(--bg); color: var(--ink); font-family: Fredoka, system-ui, sans-serif; }
   main { max-width: 1500px; margin: 0 auto; padding: 40px 16px 64px; }
   h1 { margin: 0; font-size: clamp(1.8rem, 5vw, 2.8rem); }
-  .lede { max-width: 62em; color: var(--dim); line-height: 1.5; margin: .5em 0 1.6em; }
-  .lede a { color: inherit; }
+  h2 { margin: 2em 0 .4em; font-size: 1.3rem; }
+  .lede { max-width: 62em; color: var(--dim); line-height: 1.5; margin: .5em 0 1.2em; }
+  a { color: inherit; }
+  .tabs { display: inline-flex; gap: 4px; padding: 4px; background: var(--paper); border: 1px solid var(--line); border-radius: 12px; margin-bottom: 1.2em; }
+  .tabs button { font: inherit; border: 0; background: none; padding: .45em 1em; border-radius: 9px; cursor: pointer; color: var(--dim); }
+  .tabs button[aria-selected="true"] { background: var(--ink); color: var(--paper); }
+  .about { color: var(--dim); margin: -.4em 0 1.2em; max-width: 62em; line-height: 1.5; }
   .scroll { overflow-x: auto; padding-bottom: 8px; }
   .grid { display: grid; grid-template-columns: 220px repeat(5, minmax(170px, 1fr)); gap: 10px; min-width: 1100px; }
   .colhead { padding: 4px 6px; }
@@ -24,38 +29,100 @@
   .rowhead { padding: 10px 8px; align-self: center; }
   .rowhead b { display: block; font-size: 1.1rem; margin-bottom: .25em; }
   .rowhead span { color: var(--dim); font-size: .86rem; line-height: 1.4; }
-  .cell { background: var(--paper); border: 1px solid var(--line); border-radius: 14px; aspect-ratio: 5 / 3.3; display: flex; }
-  .cell svg { width: 100%; height: 100%; display: block; cursor: zoom-in; }
-  @media (max-width: 700px) { .grid { grid-template-columns: 130px repeat(5, 170px); min-width: 0; } .rowhead span { display: none; } }
-  .note { color: var(--dim); font-size: .9rem; margin-top: 1.5em; max-width: 62em; line-height: 1.5; }
+  .cell { background: var(--paper); border: 1px solid var(--line); border-radius: 14px; display: flex; flex-direction: column; overflow: hidden; cursor: zoom-in; }
+  .cell .fig { aspect-ratio: 5 / 3.3; display: flex; position: relative; }
+  .cell .fig + .fig { border-top: 1px dashed var(--line); }
+  .cell .tag { position: absolute; top: 6px; left: 8px; font-size: .72rem; color: var(--dim); background: var(--paper); padding: 0 .3em; border-radius: 4px; }
+  .cell svg { width: 100%; height: 100%; display: block; }
+  .refs { list-style: none; padding: 0; margin: 0; display: grid; gap: .7em; max-width: 70em; }
+  .refs li { color: var(--dim); line-height: 1.45; }
+  .refs b { color: var(--ink); }
+  .credits { color: var(--dim); font-size: .9rem; line-height: 1.6; max-width: 70em; }
   dialog { border: 0; border-radius: 18px; padding: 0; background: var(--paper); width: min(92vw, 1100px); }
   dialog::backdrop { background: rgba(20, 18, 14, .6); }
-  dialog svg { width: 100%; height: auto; max-height: 78vh; display: block; }
+  dialog svg { width: 100%; height: auto; max-height: 38vh; display: block; }
+  dialog .one svg { max-height: 78vh; }
+  dialog .row { position: relative; }
+  dialog .row + .row { border-top: 1px dashed var(--line); }
+  dialog .row .tag { position: absolute; top: 10px; left: 14px; color: var(--dim); font-size: .85rem; }
   dialog p { margin: 0; padding: 10px 18px 16px; color: var(--dim); }
+  @media (max-width: 700px) { .grid { grid-template-columns: 130px repeat(5, 170px); min-width: 0; } .rowhead span { display: none; } }
 </style>
 </head>
 <body>
 <main>
   <h1>Squirrel Studies</h1>
   <p class="lede">Five takes on one character, each drawn in the same five poses. Every shape is a smooth spline: there are no straight lines, only curves that meet in soft points at the nose, toes, elbows, knees and fur tips. The figure is a flat dark-grey silhouette; thin white lines show where limbs, head and tail overlap, and the white of the eyes carries the whole expression. Click any drawing to see it large. <a href="../">← all games</a></p>
+  <div class="tabs" role="tablist">
+    <button role="tab" data-mode="v2" aria-selected="true">v2 · from photos</button>
+    <button role="tab" data-mode="v1" aria-selected="false">v1 · first pass</button>
+    <button role="tab" data-mode="both" aria-selected="false">Compare v1 / v2</button>
+  </div>
+  <p class="about" id="about"></p>
   <div class="scroll"><div class="grid" id="grid"></div></div>
-  <p class="note">Rows are the five versions; columns are the five pose-and-expression pairs. The poses are shared joint positions, so differences between rows come only from each version's proportions and curve style.</p>
+
+  <h2>What v2 took from the photographs</h2>
+  <ul class="refs" id="refs"></ul>
+  <ul class="refs" style="margin-top:.9em">
+    <li><b>Proportions:</b> a rounder, higher-crowned head with a shorter, blunter snout and the eye set mid-head; a deep chest and slimmer waist; a heavy haunch and a long hind foot that dominate the rear silhouette; a tail about as long as head and body together, narrow at the root and widest two-thirds of the way out.</li>
+  </ul>
+  <h2>Photo credits</h2>
+  <p class="credits">Used as pose and proportion reference only; nothing is traced. All from Wikimedia Commons:
+    <a href="https://commons.wikimedia.org/wiki/File:Run,_Squirrel,_Run_-_Flickr_-_John_Brighenti.jpg">Run, Squirrel, Run</a> by John Brighenti (CC BY 2.0) ·
+    <a href="https://commons.wikimedia.org/wiki/File:Ekorrhopp.jpg">Ekorrhopp</a> by Slottsviken51 (CC0) ·
+    <a href="https://commons.wikimedia.org/wiki/File:Sciurus_niger_jumping_over_branch_2005-11-21.jpg">Sciurus niger jumping over branch</a> by Aaron Jacobs (CC BY-SA 2.0) ·
+    <a href="https://commons.wikimedia.org/wiki/File:Rushing_Squirrel_(53891801318).jpg">Rushing Squirrel</a> by HLI-Photography (CC0) ·
+    <a href="https://commons.wikimedia.org/wiki/File:A_hasty_retreat_(443441005).jpg">A hasty retreat</a> by Patty O'Hearn Kickham (CC BY 2.0) ·
+    <a href="https://commons.wikimedia.org/wiki/File:Eastern_gray_squirrel_(Sciurus_carolinensis)_bounding_across_a_lawn_in_Central_Park_2018.jpeg">Eastern gray squirrel bounding across a lawn</a> by Jay Dobkin (CC BY 4.0) ·
+    <a href="https://commons.wikimedia.org/wiki/File:Black_squirrel_prior_to_jumping.jpg">Black squirrel prior to jumping</a> by EleetCanoe (CC BY-SA 4.0) ·
+    <a href="https://commons.wikimedia.org/wiki/File:Squirrel_on_the_Run_-_Aug_2008_-_Neighbour%27s_Garden_Fence.jpg">Squirrel on the Run</a> by Gareth Williams (CC BY 2.0) ·
+    <a href="https://commons.wikimedia.org/wiki/File:Red_squirrel_jumping.jpg">Red squirrel jumping</a> by Evas-naturfotografie (CC BY-SA 4.0)
+  </p>
 </main>
 <dialog id="zoom"><div id="zoomArt"></div><p id="zoomCap"></p></dialog>
 <script type="module">
-  import { POSES, VERSIONS, figureSVG } from './rig.js';
+  import * as V2 from './rig.js';
+  import * as V1 from './rig-v1.js';
+  const ABOUT = {
+    v2: 'Re-posed and re-proportioned from Wikimedia Commons photographs of squirrels leaping, bounding, creeping and crouching (credits below).',
+    v1: 'The first pass, drawn from general knowledge of squirrel anatomy before looking at reference photos.',
+    both: 'Each cell shows v1 on top and v2 below, same version and pose, so the changes are easy to see.',
+  };
   const grid = document.getElementById('grid');
-  grid.insertAdjacentHTML('beforeend', '<div></div>' + POSES.map((p, i) => `<div class="colhead"><b>${i + 1}. ${p.title}</b><span>${p.mood}</span></div>`).join(''));
-  for (const V of VERSIONS) {
-    grid.insertAdjacentHTML('beforeend', `<div class="rowhead"><b>${V.name}</b><span>${V.note}</span></div>`);
-    for (const P of POSES) grid.insertAdjacentHTML('beforeend', `<div class="cell" data-v="${V.key}" data-p="${P.key}">${figureSVG(P, V)}</div>`);
+  let mode = 'v2';
+  const find = (R, v, p) => [R.VERSIONS.find((x) => x.key === v), R.POSES.find((x) => x.key === p)];
+  const fig = (R, v, p, tag) => { const [V, P] = find(R, v, p); return `<div class="fig">${tag ? `<span class="tag">${tag}</span>` : ''}${R.figureSVG(P, V)}</div>`; };
+  function draw() {
+    const R = mode === 'v1' ? V1 : V2;
+    document.getElementById('about').textContent = ABOUT[mode];
+    grid.innerHTML = '<div></div>' + R.POSES.map((p, i) => `<div class="colhead"><b>${i + 1}. ${p.title}</b><span>${p.mood}</span></div>`).join('');
+    for (const V of R.VERSIONS) {
+      grid.insertAdjacentHTML('beforeend', `<div class="rowhead"><b>${V.name}</b><span>${V.note}</span></div>`);
+      for (const P of R.POSES) {
+        const inner = mode === 'both' ? fig(V1, V.key, P.key, 'v1') + fig(V2, V.key, P.key, 'v2') : fig(R, V.key, P.key);
+        grid.insertAdjacentHTML('beforeend', `<div class="cell" data-v="${V.key}" data-p="${P.key}">${inner}</div>`);
+      }
+    }
   }
+  document.getElementById('refs').innerHTML = V2.POSES.map((p, i) => `<li><b>${i + 1}. ${p.title}:</b> ${p.ref}</li>`).join('');
+  for (const b of document.querySelectorAll('.tabs button')) {
+    b.addEventListener('click', () => {
+      mode = b.dataset.mode;
+      for (const o of document.querySelectorAll('.tabs button')) o.setAttribute('aria-selected', o === b);
+      draw();
+    });
+  }
+  draw();
+
   const dlg = document.getElementById('zoom');
   grid.addEventListener('click', (e) => {
     const cell = e.target.closest('.cell');
     if (!cell) return;
-    const V = VERSIONS.find((v) => v.key === cell.dataset.v), P = POSES.find((p) => p.key === cell.dataset.p);
-    document.getElementById('zoomArt').innerHTML = figureSVG(P, V);
+    const { v, p } = cell.dataset, art = document.getElementById('zoomArt');
+    const row = (R, tag) => { const [V, P] = find(R, v, p); return `<div class="row"><span class="tag">${tag}</span>${R.figureSVG(P, V)}</div>`; };
+    art.className = mode === 'both' ? '' : 'one';
+    art.innerHTML = mode === 'both' ? row(V1, 'v1') + row(V2, 'v2') : row(mode === 'v1' ? V1 : V2, mode);
+    const [V, P] = find(V2, v, p);
     document.getElementById('zoomCap').textContent = `${V.name} · ${P.title}, ${P.mood}`;
     dlg.showModal();
   });

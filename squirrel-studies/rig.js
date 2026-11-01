@@ -1,3 +1,4 @@
+// v2: re-posed and re-proportioned from Wikimedia Commons photographs (credited on the page).
 // A vector squirrel rig. Every outline is a closed Catmull-Rom spline converted to cubic Béziers,
 // so there are no straight lines anywhere; "sharp" points (nose, toes, fur tips, the outside of
 // elbows and knees) are where two curves meet with short tangents.
@@ -115,7 +116,7 @@ function taper(P, w) {
 // ---------- head, eyes, ears ----------
 // Profile facing right: round skull, forehead sloping down through a dip (the "stop") into a
 // tapering snout, a nose that is almost a point.
-const HEAD = [[-0.95, -0.1], [-0.62, -0.7], [0, -0.9], [0.45, -0.68], [0.64, -0.5], [1.0, -0.37], [1.36, -0.15], [1.33, 0.02], [1.0, 0.22], [0.5, 0.5], [-0.15, 0.62], [-0.7, 0.42]];
+const HEAD = [[-0.92, -0.05], [-0.66, -0.72], [-0.05, -0.96], [0.42, -0.75], [0.6, -0.52], [0.9, -0.38], [1.2, -0.14], [1.16, 0.04], [0.88, 0.24], [0.42, 0.52], [-0.18, 0.63], [-0.7, 0.42]];
 const NOSE = 6;
 
 // Eye shapes in eye-local space (radius 1, facing right): start point, then cubic segments.
@@ -147,7 +148,7 @@ function headParts(c, r, ang, dir, expr, V) {
   };
   const earLine = (base, deg, L) => { const a = (deg * Math.PI) / 180, A = (p) => X(add(base, rot([p[0] * L, p[1] * L], a))); return taper([A([0.2, 0.05]), A([0.5, 0.06]), A([0.82, 0])], V.line * 0.8); };
   // eye
-  const ed = EYES[E.eye], R = V.eye, eo = [0.36, -0.3];
+  const ed = EYES[E.eye], R = V.eye, eo = [0.3, -0.33];
   const EX = (p) => X(add(eo, [p[0] * R, p[1] * R]));
   let d = `M${f(EX(ed.d[0]))}`;
   for (const seg of ed.d.slice(1)) d += `C${f(EX(seg[0]))} ${f(EX(seg[1]))} ${f(EX(seg[2]))}`;
@@ -173,63 +174,69 @@ function headParts(c, r, ang, dir, expr, V) {
 // (bends back), toe; fore = shoulder, elbow (bends back), wrist (bends forward), paw.
 export const POSES = [
   { key: 'jump', title: 'Huge jump', mood: 'utmost joy', expr: 'joy',
-    spine: [[-0.35, 0.12], [0, 0], [0.55, -0.24], [1.05, -0.5], [1.34, -0.72]],
-    head: { c: [1.6, -0.97], ang: -24, dir: 1 },
-    foreN: [[1.04, -0.46], [1.12, -0.16], [1.5, -0.24], [1.8, -0.4]], foreF: [[0.98, -0.5], [1.04, -0.2], [1.42, -0.18], [1.72, -0.28]],
-    hindN: [[0.04, 0.04], [-0.16, 0.42], [-0.62, 0.6], [-1.08, 0.7]], hindF: [[-0.02, 0.0], [-0.22, 0.36], [-0.68, 0.52], [-1.12, 0.56]],
-    tail: [[-0.4, 0.06], [-0.95, -0.08], [-1.35, -0.55], [-1.24, -1.06], [-0.88, -1.24], [-0.62, -1.08]], shadow: 1.25 },
+    ref: 'Gray squirrel mid-leap over a fence (body nearly level, forelegs reaching together, hind feet trailing soles-up); red squirrel diving off a branch (full stretch).',
+    spine: [[-0.42, 0.08], [0, 0], [0.52, -0.12], [1.0, -0.2], [1.28, -0.3]],
+    head: { c: [1.52, -0.42], ang: -12, dir: 1 },
+    foreN: [[1.0, -0.15], [1.08, 0.02], [1.4, 0.08], [1.62, 0.05]], foreF: [[0.96, -0.17], [1.02, 0.02], [1.32, 0.12], [1.54, 0.11]],
+    hindN: [[0.02, 0.04], [-0.08, 0.24], [-0.46, 0.28], [-0.84, 0.19]], hindF: [[-0.02, 0.02], [-0.14, 0.2], [-0.5, 0.2], [-0.88, 0.09]],
+    tail: [[-0.46, 0.05], [-0.95, 0.02], [-1.4, -0.08], [-1.75, -0.3], [-1.92, -0.62], [-1.82, -0.92]], shadow: 1.05 }, // carries the body's line, then sweeps up
   { key: 'scamper', title: 'Frantic scamper', mood: 'fear', expr: 'fear', frazzle: true,
-    spine: [[-0.3, 0.02], [0, -0.1], [0.4, -0.34], [0.78, -0.2], [1.0, -0.12]],
-    head: { c: [1.24, -0.16], ang: 6, dir: 1 },
-    foreN: [[0.78, -0.14], [0.68, 0.17], [0.88, 0.37], [1.02, 0.45]], foreF: [[0.74, -0.16], [0.6, 0.14], [0.65, 0.4], [0.78, 0.45]],
-    hindN: [[0.03, -0.03], [0.33, 0.14], [0.17, 0.37], [0.62, 0.45]], hindF: [[-0.02, -0.06], [0.24, 0.08], [0.02, 0.28], [0.44, 0.34]],
-    tail: [[-0.34, -0.02], [-0.76, 0.02], [-1.02, -0.36], [-0.84, -0.76], [-1.06, -1.06], [-0.8, -1.28]], ground: 0.45 },
+    ref: 'Black squirrel running a fence rail (strong hunch of the lower back, head low); red squirrel bounding (hind feet gathered forward under the belly).',
+    spine: [[-0.32, 0.06], [0, -0.12], [0.38, -0.3], [0.74, -0.16], [0.96, -0.04]],
+    head: { c: [1.18, 0.02], ang: 14, dir: 1 },
+    foreN: [[0.74, -0.08], [0.64, 0.16], [0.8, 0.36], [0.94, 0.44]], foreF: [[0.7, -0.1], [0.56, 0.14], [0.6, 0.38], [0.7, 0.44]],
+    hindN: [[0.03, -0.06], [0.36, 0.1], [0.2, 0.34], [0.62, 0.44]], hindF: [[-0.02, -0.08], [0.28, 0.06], [0.06, 0.28], [0.46, 0.36]],
+    tail: [[-0.36, 0.04], [-0.78, 0.0], [-1.12, -0.18], [-1.3, -0.52], [-1.18, -0.85], [-1.32, -1.1]], ground: 0.44 },
   { key: 'sneak', title: 'Sneaking', mood: 'squinty, watchful', expr: 'sneak',
-    spine: [[-0.42, 0.04], [0, 0], [0.5, 0.07], [1.0, 0.02], [1.3, 0.07]],
-    head: { c: [1.58, 0.1], ang: 8, dir: 1 },
-    foreN: [[1.0, 0.07], [0.9, 0.28], [1.12, 0.21], [1.26, 0.3]], foreF: [[0.96, 0.05], [0.85, 0.28], [0.98, 0.42], [1.12, 0.45]],
-    hindN: [[0.0, 0.03], [0.24, 0.22], [-0.14, 0.36], [0.16, 0.45]], hindF: [[-0.04, 0.01], [0.17, 0.2], [-0.22, 0.33], [0.06, 0.43]],
-    tail: [[-0.46, 0.02], [-0.92, 0.04], [-1.36, -0.08], [-1.76, -0.03], [-2.0, -0.22], [-1.94, -0.44]], ground: 0.45 },
+    ref: 'Gray squirrel creeping head-first along a fence top; black squirrel crouched before a jump (compressed, shoulders high, head low and forward).',
+    spine: [[-0.4, -0.02], [0, -0.06], [0.5, 0.0], [0.98, 0.04], [1.26, 0.1]],
+    head: { c: [1.52, 0.16], ang: 10, dir: 1 },
+    foreN: [[0.98, 0.1], [0.86, 0.26], [1.06, 0.2], [1.2, 0.28]], foreF: [[0.94, 0.08], [0.8, 0.28], [0.94, 0.42], [1.08, 0.45]],
+    hindN: [[0.0, -0.02], [0.24, 0.18], [-0.14, 0.34], [0.16, 0.45]], hindF: [[-0.04, -0.04], [0.16, 0.16], [-0.22, 0.32], [0.06, 0.43]],
+    tail: [[-0.44, -0.04], [-0.82, -0.2], [-1.0, -0.52], [-0.86, -0.82], [-0.56, -0.92], [-0.3, -0.82]], ground: 0.45 }, // arched over the back, tip curling forward
   { key: 'turn', title: 'Skidding turnaround', mood: 'baffled', expr: 'baffled',
-    spine: [[-0.22, 0.06], [0, 0], [0.36, -0.24], [0.26, -0.62], [-0.04, -0.8]],
-    head: { c: [-0.34, -0.88], ang: 14, dir: -1 },
-    foreN: [[0.22, -0.56], [0.38, -0.26], [0.06, 0.08], [-0.26, 0.4]], foreF: [[0.27, -0.6], [0.48, -0.38], [0.56, -0.1], [0.42, 0.04]],
-    hindN: [[0.03, 0.04], [0.36, 0.22], [0.25, 0.42], [0.66, 0.48]], hindF: [[-0.02, 0.0], [0.29, 0.16], [0.12, 0.38], [0.5, 0.45]],
-    tail: [[-0.26, 0.02], [-0.56, -0.36], [-0.42, -0.96], [0.14, -1.3], [0.74, -1.2], [1.0, -0.84]], ground: 0.48 },
+    ref: 'No turnaround photo on Commons; built from a red squirrel stepping down rocks (front end dropping, back arched, tail held up in an S) and the crouch above, with a cat-like head tilt.',
+    spine: [[-0.2, 0.04], [0, -0.02], [0.34, -0.3], [0.2, -0.6], [-0.1, -0.72]],
+    head: { c: [-0.38, -0.74], ang: 18, dir: -1 },
+    foreN: [[0.16, -0.52], [0.3, -0.24], [0.02, 0.1], [-0.28, 0.44]], foreF: [[0.22, -0.56], [0.42, -0.36], [0.34, -0.06], [0.12, 0.12]],
+    hindN: [[0.03, 0.02], [0.38, 0.2], [0.28, 0.42], [0.7, 0.48]], hindF: [[-0.02, -0.02], [0.3, 0.14], [0.14, 0.38], [0.52, 0.45]],
+    tail: [[-0.24, 0.0], [-0.5, -0.4], [-0.3, -0.98], [0.25, -1.28], [0.82, -1.15], [1.05, -0.78]], ground: 0.48 }, // the momentum of the run, still swinging
   { key: 'charge', title: 'Head-down charge', mood: 'fearless', expr: 'fearless',
-    spine: [[-0.42, -0.12], [0, -0.15], [0.55, -0.1], [1.05, 0.03], [1.3, 0.13]],
-    head: { c: [1.55, 0.3], ang: 44, dir: 1 }, // forehead first
-    foreN: [[1.05, 0.09], [0.95, 0.31], [1.3, 0.38], [1.56, 0.45]], foreF: [[1.0, 0.07], [0.85, 0.31], [1.0, 0.45], [1.18, 0.48]],
-    hindN: [[0.02, -0.1], [-0.16, 0.16], [-0.52, 0.31], [-0.82, 0.48]], hindF: [[-0.02, -0.12], [0.16, 0.12], [-0.1, 0.35], [0.26, 0.47]],
-    tail: [[-0.46, -0.12], [-0.96, -0.22], [-1.46, -0.17], [-1.86, -0.35], [-2.06, -0.6]], ground: 0.48 },
+    ref: 'Gray squirrel bounding across a Central Park lawn (low, long and level, forelegs reaching, tail streaming straight back).',
+    spine: [[-0.42, -0.1], [0, -0.14], [0.55, -0.1], [1.04, 0.0], [1.3, 0.1]],
+    head: { c: [1.56, 0.24], ang: 40, dir: 1 },
+    foreN: [[1.04, 0.06], [0.96, 0.28], [1.32, 0.38], [1.58, 0.45]], foreF: [[1.0, 0.04], [0.86, 0.28], [1.02, 0.44], [1.2, 0.48]],
+    hindN: [[0.02, -0.08], [-0.14, 0.16], [-0.52, 0.3], [-0.84, 0.46]], hindF: [[-0.02, -0.1], [0.2, 0.1], [-0.02, 0.34], [0.32, 0.46]],
+    tail: [[-0.46, -0.1], [-0.98, -0.14], [-1.5, -0.12], [-1.9, -0.26], [-2.12, -0.5]], ground: 0.48 },
 ];
 
 // ---------- the five versions ----------
 export const VERSIONS = [
   { key: 'deco', name: 'Deco Streamline', note: 'Long sweeping arcs like a 1930s hood ornament; the tail ends in a scroll (volute) with crisp, evenly spaced flame tips.',
-    bodyLen: 0.95, thick: 0.88, head: 0.33, eye: 0.36, snout: 1.18, legLen: 1.02, legW: 0.92, tailLen: 1.1, tailW: 0.24, arch: 1.0, line: 0.022, earL: 0.95,
+    bodyLen: 0.95, thick: 0.88, head: 0.33, eye: 0.36, snout: 1.18, legLen: 1.02, legW: 0.92, tailLen: 1.1, tailW: 0.27, arch: 1.0, line: 0.022, earL: 0.95,
     tuft: { from: 0.72, every: 2, amp: 0.26, sweep: 0.5, outer: 1, inner: 0.6, fan: 0.7 }, volute: 4 },
   { key: 'sea', name: 'Sea Creature', note: 'An eel-slim body and a tail that flares like a fin, its fur tips swept back like fin rays.',
-    bodyLen: 1.12, thick: 0.72, head: 0.31, eye: 0.4, snout: 1.0, legLen: 0.88, legW: 0.75, tailLen: 1.2, tailW: 0.2, arch: 1.2, line: 0.018, earL: 0.55,
+    bodyLen: 1.12, thick: 0.72, head: 0.31, eye: 0.4, snout: 1.0, legLen: 0.88, legW: 0.75, tailLen: 1.2, tailW: 0.22, arch: 1.2, line: 0.018, earL: 0.55,
     tuft: { from: 0.62, every: 2, amp: 0.38, sweep: 1.4, outer: 1, inner: 0.85, fan: 1.15 }, fin: true },
   { key: 'serpent', name: 'Serpentine', note: 'The whole spine moves in S-waves, and the tail carries the wave on, the way a snake travels.',
-    bodyLen: 1.02, thick: 0.85, head: 0.32, eye: 0.34, snout: 1.12, legLen: 0.95, legW: 0.9, tailLen: 1.35, tailW: 0.22, arch: 1.6, line: 0.02, earL: 0.68,
+    bodyLen: 1.02, thick: 0.85, head: 0.32, eye: 0.34, snout: 1.12, legLen: 0.95, legW: 0.9, tailLen: 1.35, tailW: 0.25, arch: 1.6, line: 0.02, earL: 0.68,
     tuft: { from: 0.66, every: 1, amp: 0.16, sweep: 0.6, outer: 1, inner: 1, fan: 0.8 }, wave: 0.24 },
   { key: 'ferret', name: 'Ferret Eccentric', note: 'A long, low torso on short legs with a small head and big eyes; a plush tail with small rounded tips.',
     bodyLen: 1.38, thick: 1.05, head: 0.29, eye: 0.42, snout: 0.84, legLen: 0.64, legW: 1.1, tailLen: 0.88, tailW: 0.32, arch: 1.25, line: 0.024, earL: 0.52,
     tuft: { from: 0.62, every: 2, amp: 0.22, sweep: 0.3, outer: 1, inner: 1, fan: 0.9 } },
   { key: 'cat', name: 'Cat Kinetic', note: 'Long legs and a big, kitten-like head; the most stretch, the deepest back arch, a lashing tail with hooked tips.',
-    bodyLen: 1.0, thick: 0.86, head: 0.4, eye: 0.44, snout: 0.82, legLen: 1.32, legW: 0.88, tailLen: 1.3, tailW: 0.17, arch: 1.5, line: 0.021, earL: 0.98,
+    bodyLen: 1.0, thick: 0.86, head: 0.4, eye: 0.44, snout: 0.82, legLen: 1.32, legW: 0.88, tailLen: 1.3, tailW: 0.21, arch: 1.5, line: 0.021, earL: 0.98,
     tuft: { from: 0.68, every: 2, amp: 0.45, sweep: 0.9, outer: 1.5, inner: 0.4, fan: 1.1 }, hook: true },
 ];
 
-const BODY_TOP = [0.2, 0.26, 0.19, 0.21, 0.13], BODY_BOT = [0.19, 0.25, 0.2, 0.25, 0.15];
-const HIND_W = [0.3, 0.12, 0.065, 0.05], FORE_W = [0.13, 0.075, 0.05, 0.045];
+const BODY_TOP = [0.2, 0.25, 0.18, 0.22, 0.14], BODY_BOT = [0.18, 0.22, 0.16, 0.27, 0.16];
+const HIND_W = [0.33, 0.13, 0.07, 0.06], FORE_W = [0.13, 0.075, 0.05, 0.045];
 
 function tailProfile(V, n) {
   return Array.from({ length: n }, (_, i) => {
     const t = i / (n - 1);
-    const w = V.fin ? 0.3 + 0.35 * Math.sin(t * 1.4) + 1.3 * smooth(Math.max(0, (t - 0.55) / 0.45)) : 0.28 + 0.78 * Math.sin(Math.min(1, t * 1.15) * Math.PI * 0.55);
+    const w = V.fin ? 0.3 + 0.35 * Math.sin(t * 1.4) + 1.3 * smooth(Math.max(0, (t - 0.55) / 0.45))
+      : t < 0.6 ? 0.25 + 0.75 * smooth(t / 0.6) : t < 0.85 ? 1 - (t - 0.6) * 0.2 : 0.95 - ((t - 0.85) / 0.15) * 0.35;
     return w * V.tailW * (t > 0.92 ? 1 - (t - 0.92) * 4 : 1);
   });
 }
