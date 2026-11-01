@@ -1,0 +1,65 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Squirrel Studies</title>
+<link rel="icon" href="data:,">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;600;700&display=swap" rel="stylesheet">
+<style>
+  :root { --bg: #ece7dc; --paper: #f6f3ec; --ink: #2b2d31; --dim: #6c6a64; --line: #d8d1c3; }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--ink); font-family: Fredoka, system-ui, sans-serif; }
+  main { max-width: 1500px; margin: 0 auto; padding: 40px 16px 64px; }
+  h1 { margin: 0; font-size: clamp(1.8rem, 5vw, 2.8rem); }
+  .lede { max-width: 62em; color: var(--dim); line-height: 1.5; margin: .5em 0 1.6em; }
+  .lede a { color: inherit; }
+  .scroll { overflow-x: auto; padding-bottom: 8px; }
+  .grid { display: grid; grid-template-columns: 220px repeat(5, minmax(170px, 1fr)); gap: 10px; min-width: 1100px; }
+  .colhead { padding: 4px 6px; }
+  .colhead b { display: block; font-size: 1.02rem; }
+  .colhead span { color: var(--dim); font-size: .9rem; }
+  .rowhead { padding: 10px 8px; align-self: center; }
+  .rowhead b { display: block; font-size: 1.1rem; margin-bottom: .25em; }
+  .rowhead span { color: var(--dim); font-size: .86rem; line-height: 1.4; }
+  .cell { background: var(--paper); border: 1px solid var(--line); border-radius: 14px; aspect-ratio: 5 / 3.3; display: flex; }
+  .cell svg { width: 100%; height: 100%; display: block; cursor: zoom-in; }
+  @media (max-width: 700px) { .grid { grid-template-columns: 130px repeat(5, 170px); min-width: 0; } .rowhead span { display: none; } }
+  .note { color: var(--dim); font-size: .9rem; margin-top: 1.5em; max-width: 62em; line-height: 1.5; }
+  dialog { border: 0; border-radius: 18px; padding: 0; background: var(--paper); width: min(92vw, 1100px); }
+  dialog::backdrop { background: rgba(20, 18, 14, .6); }
+  dialog svg { width: 100%; height: auto; max-height: 78vh; display: block; }
+  dialog p { margin: 0; padding: 10px 18px 16px; color: var(--dim); }
+</style>
+</head>
+<body>
+<main>
+  <h1>Squirrel Studies</h1>
+  <p class="lede">Five takes on one character, each drawn in the same five poses. Every shape is a smooth spline: there are no straight lines, only curves that meet in soft points at the nose, toes, elbows, knees and fur tips. The figure is a flat dark-grey silhouette; thin white lines show where limbs, head and tail overlap, and the white of the eyes carries the whole expression. Click any drawing to see it large. <a href="../">← all games</a></p>
+  <div class="scroll"><div class="grid" id="grid"></div></div>
+  <p class="note">Rows are the five versions; columns are the five pose-and-expression pairs. The poses are shared joint positions, so differences between rows come only from each version's proportions and curve style.</p>
+</main>
+<dialog id="zoom"><div id="zoomArt"></div><p id="zoomCap"></p></dialog>
+<script type="module">
+  import { POSES, VERSIONS, figureSVG } from './rig.js';
+  const grid = document.getElementById('grid');
+  grid.insertAdjacentHTML('beforeend', '<div></div>' + POSES.map((p, i) => `<div class="colhead"><b>${i + 1}. ${p.title}</b><span>${p.mood}</span></div>`).join(''));
+  for (const V of VERSIONS) {
+    grid.insertAdjacentHTML('beforeend', `<div class="rowhead"><b>${V.name}</b><span>${V.note}</span></div>`);
+    for (const P of POSES) grid.insertAdjacentHTML('beforeend', `<div class="cell" data-v="${V.key}" data-p="${P.key}">${figureSVG(P, V)}</div>`);
+  }
+  const dlg = document.getElementById('zoom');
+  grid.addEventListener('click', (e) => {
+    const cell = e.target.closest('.cell');
+    if (!cell) return;
+    const V = VERSIONS.find((v) => v.key === cell.dataset.v), P = POSES.find((p) => p.key === cell.dataset.p);
+    document.getElementById('zoomArt').innerHTML = figureSVG(P, V);
+    document.getElementById('zoomCap').textContent = `${V.name} · ${P.title}, ${P.mood}`;
+    dlg.showModal();
+  });
+  dlg.addEventListener('click', () => dlg.close());
+</script>
+</body>
+</html>
